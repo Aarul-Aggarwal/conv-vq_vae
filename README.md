@@ -15,7 +15,7 @@ A standard VAE learns a **continuous** latent space regularized towards a Gaussi
 Given a codebook $\mathcal{C} = \{e_1, e_2, \dots, e_K\}$ with $e_k \in \mathbb{R}^D$ (here $K = 512$, $D = 4$), each encoder output vector $z_e(x)$ is replaced by its nearest codebook entry:
 
 $$
-z_q(x) = e_k, \quad \text{where } k = \arg\min_j \; \| z_e(x) - e_j \|_2^2
+z_q(x) = e_k, \quad \text{where } k = \arg\min_j \ \| z_e(x) - e_j \|_2^2
 $$
 
 The squared distances are computed efficiently without loops by expanding the square:
@@ -31,7 +31,7 @@ which is just two sums and one matrix multiplication over the whole batch.
 Since $\arg\min$ has no gradient, the loss has **three terms**, each training a different part of the model:
 
 $$
-\mathcal{L} = \underbrace{\frac{\| x - \hat{x} \|_2^2}{\sigma^2_{\text{data}}}}_{\text{reconstruction}} \;+\; \underbrace{\| \text{sg}[z_e(x)] - z_q(x) \|_2^2}_{\text{codebook loss}} \;+\; \beta \, \underbrace{\| z_e(x) - \text{sg}[z_q(x)] \|_2^2}_{\text{commitment loss}}
+\mathcal{L} = \underbrace{\frac{\| x - \hat{x} \|_2^2}{\sigma^2_{\text{data}}}}_{\text{reconstruction}} \+\ \underbrace{\| \text{sg}[z_e(x)] - z_q(x) \|_2^2}_{\text{codebook loss}} \+\ \beta \, \underbrace{\| z_e(x) - \text{sg}[z_q(x)] \|_2^2}_{\text{commitment loss}}
 $$
 
 where $\text{sg}[\cdot]$ is the **stop-gradient** operator (`.detach()` in PyTorch) and $\beta = 0.25$.
