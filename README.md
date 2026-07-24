@@ -71,12 +71,12 @@ Confirmed by picking it out and passing it through the decoder. This was the out
 
 ## Architecture
 
-**Encoder** — 3 strided conv blocks (Conv → BatchNorm → ReLU), each halving spatial size:
-`(1, 32, 32) → (8, 15, 15) → (16, 8, 8) → (4, 4, 4)` — a 4×4 grid of 4-dim latent vectors.
+**Encoder** - 3 strided conv blocks (Conv -> BatchNorm -> ReLU), each halving spatial size:
+`(1, 32, 32) -> (8, 15, 15) -> (16, 8, 8) -> (4, 4, 4)` - a 4×4 grid of 4-dim latent vectors.
 
-**Vector Quantizer** — codebook of $K = 512$ entries, $D = 4$ dims, initialized uniformly in $[-1/K,\ 1/K]$. The latent grid is reshaped to `(B·H·W, D)` so every spatial position is quantized independently — one image is represented by **16 discrete codes**.
+**Vector Quantizer** - codebook of $K = 512$ entries, $D = 4$ dims, initialized uniformly in $[-1/K,\ 1/K]$. The latent grid is reshaped to `(B·H·W, D)` so every spatial position is quantized independently, one image is represented by **16 discrete codes**.
 
-**Decoder** — 3 transposed-conv blocks mirroring the encoder, ending in a Sigmoid (pixel values in $[0,1]$).
+**Decoder** - 3 transposed-conv blocks mirroring the encoder, ending in a Sigmoid (pixel values in $[0,1]$).
 
 ## Training Setup
 
@@ -98,7 +98,7 @@ Confirmed by picking it out and passing it through the decoder. This was the out
 | kNN accuracy on continuous latents $z_e$ | 95.7% |
 | kNN accuracy on quantized latents $z_q$ | 94.5% |
 
-The quantized latents lose only ~1% of linear separability vs the continuous ones — the discrete bottleneck retains almost all class information. TSNE plots of both latent spaces show clear digit clusters, and the codebook usage histogram confirms a healthy spread of active codes (no collapse).
+The quantized latents lose only ~1% of linear separability vs the continuous ones (from the KNN analysis) the discrete bottleneck retains almost all class information. TSNE plots of both latent spaces show clear digit clusters, and the codebook usage histogram confirms a healthy spread of active codes (no collapse).
 
 ---
 
@@ -113,22 +113,21 @@ The quantized latents lose only ~1% of linear separability vs the continuous one
 
 ## Concepts I Learned
 
-1. **Discrete latent spaces** — why they're useful (compression, priors like PixelCNN/transformers can model discrete tokens, no posterior collapse like standard VAEs).
-2. **Straight-through gradient estimation** — the `z + (z_q - z).detach()` trick to backprop through a non-differentiable argmin.
-3. **Stop-gradient decoupling** — using `.detach()` to route different loss terms to different parameters (codebook vs encoder) within a single backward pass.
-4. **Codebook collapse & perplexity** — monitoring effective codebook usage; low perplexity means dead codes.
-5. **Vectorized pairwise distances** — computing all $N \times K$ L2 distances with a single matmul instead of loops.
-6. **Commitment loss & β** — the encoder must "commit" to codebook entries; without it, encoder outputs grow unboundedly since the codebook lags behind.
-7. **Variance-normalized reconstruction loss** — keeps loss terms on comparable scales across datasets.
-8. **Latent probing** — using kNN/TSNE on frozen latents as a cheap measure of representation quality.
+1. **Discrete latent spaces** - why they're useful (compression, priors like PixelCNN/transformers can model discrete tokens, no posterior collapse like standard VAEs).
+2. **Straight-through gradient estimation** - the `z + (z_q - z).detach()` trick to backprop through a non-differentiable argmin.
+3. **Stop-gradient decoupling** - using `.detach()` to route different loss terms to different parameters (codebook vs encoder) within a single backward pass.
+4. **Codebook collapse & perplexity** - monitoring effective codebook usage, low perplexity means dead codes.
+5. **Vectorized pairwise distances** - computing all $N \times K$ L2 distances with a single matmul instead of loops.
+6. **Commitment loss & β** - keeps the endcoder's output close to the codebook entry otherwise it grows unboundedly with the codebook lagging.
+7. **Variance-normalized reconstruction loss** - keeps loss terms on comparable scales across datasets.
+8. **Latent probing** - using kNN/TSNE on frozen latents as a cheap measure of representation quality.
 
 ## Quick Notes for Future Me
 
-- **Gradients**: reconstruction → encoder+decoder (via STE); codebook loss → codebook only; commitment → encoder only. The codebook receives *no* gradient from reconstruction.
-- **Shape gymnastics**: quantize per spatial position — `(B, D, H, W) → permute → (B·H·W, D)`, quantize, then reshape back. Forgetting `.contiguous()` after `permute` breaks `.view()`.
+- **Gradients**: reconstruction => encoder+decoder (via STE), codebook loss => codebook only, commitment => encoder only. The codebook receives *no* gradient from reconstruction.
 - If perplexity stays low early on, try: smaller codebook, EMA codebook updates (VQ-VAE-2 style), or restarting dead codes.
-- $\beta$ between 0.1–2.0 is reportedly robust (paper uses 0.25).
-- Codebook initialized to `uniform(-1/K, 1/K)` — tiny values so early nearest-neighbour assignments aren't dominated by init scale.
+- $\beta$ between 0.1-2.0 is reportedly robust (paper uses 0.25).
+- Codebook initialized to `uniform(-1/K, 1/K)` - tiny values so early nearest-neighbour assignments aren't dominated by init scale.
 - A natural next step: train an autoregressive prior (PixelCNN / small transformer) over the 4×4 grids of code indices to *generate* new digits, since VQ-VAE alone only reconstructs.
 
 ## Files
