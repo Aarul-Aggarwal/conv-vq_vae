@@ -31,7 +31,7 @@ which is just two sums and one matrix multiplication over the whole batch.
 Since $\arg\min$ has no gradient, the loss has **three terms**, each training a different part of the model:
 
 $$
-\mathcal{L} = \underbrace{\frac{\| x - \hat{x} \|_2^2}{\sigma^2_{\text{data}}}}_{\text{reconstruction}} \+\ \underbrace{\| \text{sg}[z_e(x)] - z_q(x) \|_2^2}_{\text{codebook loss}} \+\ \beta \, \underbrace{\| z_e(x) - \text{sg}[z_q(x)] \|_2^2}_{\text{commitment loss}}
+\mathcal{L} = \underbrace{\frac{\| x - \hat{x} \|_2^2}{\sigma^2_{\text{data}}}}_{\text{reconstruction}} \+\ \underbrace{\| \text{sg}[z_e(x)] - z_q(x) \|_2^2}_{\text{codebook loss}} \+\ \beta \underbrace{\| z_e(x) - \text{sg}[z_q(x)] \|_2^2}_{\text{commitment loss}}
 $$
 
 where $\text{sg}[\cdot]$ is the **stop-gradient** operator (`.detach()` in PyTorch) and $\beta = 0.25$.
