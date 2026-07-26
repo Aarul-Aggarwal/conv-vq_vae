@@ -100,6 +100,12 @@ Confirmed by picking it out and passing it through the decoder. This was the out
 
 The quantized latents lose only ~1% of linear separability vs the continuous ones (from the KNN analysis) the discrete bottleneck retains almost all class information. TSNE plots of both latent spaces show clear digit clusters, and the codebook usage histogram confirms a healthy spread of active codes (no collapse).
 
+During reconstruction the model matches the latent with the closest embedding, as seen in the grid. Passing each quantized embedding through the decoder we can understand why and where do these idices will matter.
+
+![reconstruction grid](images/recon_grid_idx.png)
+
+![all codes decoded](images/all_dec_codes.png)
+
 ---
 
 ## What I Implemented
